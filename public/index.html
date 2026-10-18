@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parfum Promo - Auth System</title>
+<style>
+  :root { --navy: #0a1f44; --navy2: #14305f; --gold: #c9a227; --bg: #eef1f6; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; margin: 0; background: var(--bg); color: #1b1b1b; }
+  .hidden { display: none !important; }
+
+  /* ---------- LOGIN VIEW ---------- */
+  #loginView { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+               background: linear-gradient(135deg, var(--navy), var(--navy2)); padding: 15px; }
+  .login-box { background: #fff; width: 100%; max-width: 400px; border-radius: 10px; padding: 28px; box-shadow: 0 8px 30px rgba(0,0,0,.35); }
+  .login-box h1 { margin: 0 0 4px; font-size: 22px; color: var(--navy); }
+  .login-box p.sub { margin: 0 0 18px; color: #666; font-size: 13px; }
+  label { font-size: 13px; font-weight: bold; color: var(--navy); }
+  input { width: 100%; padding: 9px; margin: 4px 0 12px; border: 1px solid #b8c0cf; border-radius: 5px; font-size: 14px; }
+  button { padding: 9px 14px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; background: var(--navy); color: #fff; }
+  button:hover { background: var(--navy2); }
+  button.full { width: 100%; }
+  button.light { background: #e3e8f2; color: var(--navy); }
+  button.light:hover { background: #d3dbeb; }
+  button.danger { background: #a62626; }
+  .quick { margin-top: 14px; font-size: 12px; color: #555; }
+  .quick button { padding: 5px 8px; font-size: 12px; margin: 3px 3px 0 0; }
+  #loginError { color: #b00020; font-size: 13px; margin-top: 8px; min-height: 16px; }
+
+  .divider { text-align: center; color: #888; font-size: 12px; margin: 14px 0 10px; }
+
+  /* ---------- DASHBOARD VIEW ---------- */
+  header { background: var(--navy); color: #fff; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  header h1 { margin: 0; font-size: 19px; }
+  .userbox { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .badge { background: var(--gold); color: #1b1b1b; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+  .badge.role { background: #fff; color: var(--navy); }
+  main { max-width: 950px; margin: 20px auto; padding: 0 15px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 15px; border-top: 4px solid var(--navy); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+  .card h2 { margin: 0 0 4px; font-size: 16px; color: var(--navy); }
+  .card .rule { font-size: 12px; color: #666; margin-bottom: 10px; }
+  .welcome { background: #fff; border-left: 5px solid var(--gold); padding: 14px 16px; border-radius: 6px; margin-bottom: 15px; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+  #statusCode { margin-bottom: 6px; }
+  .ok { color: #0a7a2f; } .err { color: #b00020; }
+  pre { background: #0b1220; color: #7CFC9A; padding: 12px; border-radius: 6px; overflow-x: auto; min-height: 90px; white-space: pre-wrap; font-size: 13px; }
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+<!-- ================= HALAMAN LOGIN ================= -->
+<div id="loginView">
+  <div class="login-box">
+    <h1>🧴 Parfum Promo Expense</h1>
+    <p class="sub">Silakan login untuk melanjutkan</p>
+
+    <label>Username</label>
+    <input id="username" placeholder="contoh: staff_jatim">
+    <label>Password</label>
+    <input id="password" type="password" placeholder="password">
+    <button class="full" onclick="login()">🔐 Login</button>
+    <div id="loginError"></div>
+
+    <div class="divider">atau</div>
+    <div id="googleBtn" style="display:flex;justify-content:center;"></div>
+
+    <div class="quick">
+      Akun uji (klik untuk isi otomatis):<br>
+      <button class="light" onclick="fill('staff_jatim')">staff_jatim</button>
+      <button class="light" onclick="fill('staff_jateng')">staff_jateng</button>
+      <button class="light" onclick="fill('spv_jatim')">spv_jatim</button>
+      <button class="light" onclick="fill('spv_kalimantan')">spv_kalimantan</button>
+      <button class="light" onclick="fill('auditor_ho')">auditor_ho</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= HALAMAN DASHBOARD ================= -->
+<div id="dashView" class="hidden">
+  <header>
+    <h1>🧴 Parfum Promo Expense</h1>
+    <div class="userbox">
+      <span id="hName">-</span>
+      <span class="badge role" id="hRole">-</span>
+      <span class="badge" id="hRegion">-</span>
+      <button class="danger" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="welcome">
+      👋 Selamat datang, <b id="wName">-</b>.<br>
+      Wilayah kamu: <b id="wRegion">-</b> &nbsp;|&nbsp; Peran: <b id="wRole">-</b>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>📋 Data Promo</h2>
+        <div class="rule">GET /api/promos &mdash; semua role login; data difilter sesuai region (HO Auditor melihat semua).</div>
+        <button onclick="getPromos()">Lihat Promo</button>
+        <button class="light" onclick="getPromosNoToken()">Tes tanpa token (401)</button>
+      </div>
+
+      <div class="card">
+        <h2>✅ Approve Up-Budget</h2>
+        <div class="rule">PATCH &mdash; RBAC: SPV_Area &nbsp;+&nbsp; ABAC: region promo harus sama.</div>
+        <label>ID Promo</label>
+        <input id="promoId" type="number" value="101">
+        <button onclick="approvePromo()">Approve</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>➕ Buat Promo Baru</h2>
+      <div class="rule">POST /api/promos &mdash; RBAC: Branch_Staff &nbsp;+&nbsp; ABAC: hanya untuk region sendiri.</div>
+      <div class="grid">
+        <div>
+          <label>No Reff Promo</label>
+          <input id="noReff" value="REF-PARFUM-TEST-01">
+          <label>Nama Parfum</label>
+          <input id="nama" value="Ocean Breeze EDT 50ml">
+          <label>Region</label>
+          <input id="region" value="">
+        </div>
+        <div>
+          <label>Amount</label>
+          <input id="amount" type="number" value="15000000">
+          <label>Budget Limit</label>
+          <input id="budget" type="number" value="10000000">
+          <br><button onclick="createPromo()">Buat Promo</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📨 Hasil Response</h2>
+      <div id="statusCode">Belum ada request.</div>
+      <pre id="output">-</pre>
+    </div>
+  </main>
+</div>
+
+<script>
+  let token = null;
+
+  function show(code, data) {
+    document.getElementById('statusCode').innerHTML =
+      'HTTP Status: <b class="' + (code < 300 ? 'ok' : 'err') + '">' + code + '</b>';
+    document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+  }
+
+  async function call(method, url, body, useToken = true) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (useToken && token) headers['Authorization'] = 'Bearer ' + token;
+    const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    const data = await res.json();
+    return { status: res.status, data };
+  }
+
+  async function callAndShow(method, url, body, useToken = true) {
+    const r = await call(method, url, body, useToken);
+    show(r.status, r.data);
+  }
+
+  function fill(u) {
+    document.getElementById('username').value = u;
+    document.getElementById('password').value = 'password123';
+  }
+
+  function enterDashboard(accessToken, u) {
+    token = accessToken;
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('hName').textContent = u.name;
+    document.getElementById('hRole').textContent = u.role;
+    document.getElementById('hRegion').textContent = '📍 ' + u.region;
+    document.getElementById('wName').textContent = u.name;
+    document.getElementById('wRole').textContent = u.role;
+    document.getElementById('wRegion').textContent = '📍 ' + u.region;
+    document.getElementById('region').value = u.region;
+    document.getElementById('statusCode').textContent = 'Belum ada request.';
+    document.getElementById('output').textContent = '-';
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('dashView').classList.remove('hidden');
+  }
+
+  async function login() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const r = await call('POST', '/api/auth/login', { username, password }, false);
+    if (r.status !== 200) {
+      document.getElementById('loginError').textContent = r.data.error || 'Login gagal';
+      return;
+    }
+    enterDashboard(r.data.accessToken, r.data.user);
+  }
+
+  async function handleGoogleCredential(response) {
+    const r = await call('POST', '/api/auth/google', { googleIdToken: response.credential }, false);
+    if (r.status !== 200) {
+      document.getElementById('loginError').textContent = r.data.error || 'Login Google gagal';
+      return;
+    }
+    enterDashboard(r.data.accessToken, r.data.user);
+  }
+
+  async function initGoogle() {
+    try {
+      const cfg = await (await fetch('/api/config')).json();
+      if (!window.google || !google.accounts) { setTimeout(initGoogle, 300); return; }
+      google.accounts.id.initialize({
+        client_id: cfg.googleClientId,
+        callback: handleGoogleCredential
+      });
+      google.accounts.id.renderButton(document.getElementById('googleBtn'),
+        { theme: 'outline', size: 'large', text: 'signin_with', width: 340 });
+    } catch (e) {
+      document.getElementById('loginError').textContent = 'Gagal memuat Google Login.';
+    }
+  }
+  window.addEventListener('load', initGoogle);
+
+  function logout() {
+    token = null;
+    document.getElementById('password').value = '';
+    document.getElementById('dashView').classList.add('hidden');
+    document.getElementById('loginView').classList.remove('hidden');
+  }
+
+  function getPromos() { callAndShow('GET', '/api/promos'); }
+  function getPromosNoToken() { callAndShow('GET', '/api/promos', null, false); }
+
+  function createPromo() {
+    callAndShow('POST', '/api/promos', {
+      noReffPromo: document.getElementById('noReff').value,
+      namaParfum: document.getElementById('nama').value,
+      region: document.getElementById('region').value,
+      amount: Number(document.getElementById('amount').value),
+      budgetLimit: Number(document.getElementById('budget').value)
+    });
+  }
+
+  function approvePromo() {
+    const id = document.getElementById('promoId').value;
+    callAndShow('PATCH', '/api/promos/' + id + '/approve-up-budget');
+  }
+
+  document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+</script>
+</body>
+</html>
